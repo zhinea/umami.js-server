@@ -1,8 +1,24 @@
 import {TIME_UNIT} from "./date.ts";
+import {
+    COLLECTION_TYPE, DATA_TYPE,
+    EVENT_TYPE,
+    KAFKA_TOPIC,
+    PERMISSIONS,
+    REPORT_TYPES,
+    ROLES,
+} from "../libs/constants.ts";
 
 type ObjectValues<T> = T[keyof T];
 
 export type TimeUnit = ObjectValues<typeof TIME_UNIT>;
+export type Permission = ObjectValues<typeof PERMISSIONS>;
+
+export type CollectionType = ObjectValues<typeof COLLECTION_TYPE>;
+export type Role = ObjectValues<typeof ROLES>;
+export type EventType = ObjectValues<typeof EVENT_TYPE>;
+export type DynamicDataType = ObjectValues<typeof DATA_TYPE>;
+export type KafkaTopic = ObjectValues<typeof KAFKA_TOPIC>;
+export type ReportType = ObjectValues<typeof REPORT_TYPES>;
 
 export interface User {
     id: string;
@@ -124,4 +140,8 @@ export interface RealtimeData {
     timestamp: number;
     countries?: any[];
     visitors?: any[];
+}
+
+export interface DynamicData {
+    [key: string]: number | string | DynamicData | number[] | string[] | DynamicData[];
 }

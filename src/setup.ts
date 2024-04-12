@@ -1,10 +1,10 @@
-import type Elysia from "elysia";
+import Elysia from "elysia";
 import cors from "@elysiajs/cors"
 
-export async function setupApplication(elysia: Elysia){
+export function setupApplication(){
     // setup's application
-
-    elysia.use(cors({
-        origin: "*"
-    }))
+    return new Elysia()
+        .use(cors({
+            origin: "*"
+        }))
 }

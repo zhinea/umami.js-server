@@ -5,14 +5,28 @@ import {loadSession, loadWebsite} from "../libs/load.ts";
 import cache from "../libs/cache.ts";
 import {getClientInfo} from "../libs/detect.ts";
 import {createSession} from "../queries";
+import debug from 'debug';
 
+const log = debug('ujs:session');
+
+const returnError = (er: string, payload: any) => {
+    payload.session.is_ok = false
+    return er;
+}
 
 export const useSession = async (req: any) => {
 
     try {
-        const session = await findSession(req)
-    }catch (er){
+        const session = await findSession(req);
 
+        if (!session) {
+            log('useSession: Session not found');
+            return [true, 'Session not found.'];
+        }
+
+        return [false, session]
+    } catch (e: any) {
+        return [true, e.message];
     }
 }
 
@@ -21,8 +35,8 @@ type Headers = {
     [key: string]: string
 }
 
-export const findSession = async({headers, body}: { headers: Headers, body: any }) => {
-
+export const findSession = async(req: { headers: Headers, body: any }) => {
+    const { headers, body } = req;
 
     const cacheToken = headers['x-umami-cache'];
 
@@ -60,10 +74,7 @@ export const findSession = async({headers, body}: { headers: Headers, body: any 
 
 
     const { userAgent, browser, os, ip, country, subdivision1, subdivision2, city, device } =
-        await getClientInfo({
-            body,
-            headers
-        }, {
+        await getClientInfo(req, {
             screen
         });
 

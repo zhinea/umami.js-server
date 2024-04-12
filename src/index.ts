@@ -1,78 +1,92 @@
-import Elysia, {t} from "elysia";
-import {setupApplication} from "./setup.ts";
+import Elysia from "elysia";
 import {isbot} from "isbot";
-import {HOSTNAME_REGEX, IP_REGEX} from "./libs/constants.ts";
-import {useSession, usesession} from "./utils/session.ts";
+import {useSession} from "./utils/session.ts";
+import {uuid, visitSalt} from "./utils/common.ts";
+import {createToken} from "./libs/jwt.ts";
+import {Env} from "./utils/env.ts";
+import {createBatchEvents} from "./services/Umami.service.ts";
+import debug from "debug";
+import {setupApplication} from "./setup.ts";
 
-
+let log = debug("ujs:events")
 
 async function main(){
-    let app = new Elysia();
+    return new Elysia()
+        .use(setupApplication())
+        .get('/', () => "Hello World!")
+        .post('/api/send', async (req) => {
+            let {set, headers, body} = req;
 
-    await setupApplication(app);
+            if (!process.env.DISABLE_BOT_CHECK && isbot(headers['user-agent'])) {
+                return "nope";
+            }
 
-    app.get('/', () => "Hello World!")
-
-
-    app.post('/api/send', async ({headers, body}) => {
-
-        if (!process.env.DISABLE_BOT_CHECK && isbot(headers['user-agent'])) {
-            return "nope";
-        }
-
-        // TODO: Implement hasBlockedIp function
-        //
+            // TODO: Implement hasBlockedIp function
+            //
 
 
-        const session = await useSession({
-            headers,
-            body
-        })
+            let [isError, session] = await useSession(req)
 
+            if(isError){
+                set.headers['X-UJS_Err'] = "session";
+                return session;
+            }
 
-        return body;
+            // expire visitId after 30 minutes
+            session.visitId =
+                !!session.iat && Math.floor(new Date().getTime() / 1000) - session.iat > 1800
+                    ? uuid(session.id, visitSalt())
+                    : session.visitId;
 
-    }, {
-        // TODO: FIX this VALIDATION issue
-        // body: t.Object({
-        //     events: t.Array(
-        //         t.Object({
-        //             payload: t.Object({
-        //                 data: t.MaybeEmpty(t.Any()),
-        //                 hostname: t.String({
-        //                     pattern: HOSTNAME_REGEX.source
-        //                 }),
-        //                 ip: t.String({
-        //                     pattern: IP_REGEX.source
-        //                 }),
-        //                 language: t.String({
-        //                     maxLength: 35
-        //                 }),
-        //                 referrer: t.String(),
-        //                 screen: t.String({
-        //                     maxLength: 11
-        //                 }),
-        //                 title: t.String(),
-        //                 url: t.String(),
-        //                 website: t.String(),
-        //                 name: t.String({
-        //                     maxLength: 50
-        //                 }),
-        //                 tag: t.MaybeEmpty(t.String({
-        //                     maxLength: 50
-        //                 })),
-        //                 t: t.MaybeEmpty(t.String())
-        //             }),
-        //             type: t.String({
-        //                 maxLength: 50,
-        //                 pattern: /event|identify/i.source
-        //             })
-        //         })
-        //     )
-        // })
-    });
+            session.iat = Math.floor(new Date().getTime() / 1000);
 
-    return app;
+            createBatchEvents((<any>body)?.events || [], session).then(() => {
+                log("Events created")
+            }).catch(er => {
+                log("Error creating events", er)
+            })
+
+            return createToken(session, Env.secret());
+
+        }, {
+            // TODO: FIX this VALIDATION issue
+            // body: t.Object({
+            //     events: t.Array(
+            //         t.Object({
+            //             payload: t.Object({
+            //                 data: t.MaybeEmpty(t.Any()),
+            //                 hostname: t.String({
+            //                     pattern: HOSTNAME_REGEX.source
+            //                 }),
+            //                 ip: t.String({
+            //                     pattern: IP_REGEX.source
+            //                 }),
+            //                 language: t.String({
+            //                     maxLength: 35
+            //                 }),
+            //                 referrer: t.String(),
+            //                 screen: t.String({
+            //                     maxLength: 11
+            //                 }),
+            //                 title: t.String(),
+            //                 url: t.String(),
+            //                 website: t.String(),
+            //                 name: t.String({
+            //                     maxLength: 50
+            //                 }),
+            //                 tag: t.MaybeEmpty(t.String({
+            //                     maxLength: 50
+            //                 })),
+            //                 t: t.MaybeEmpty(t.String())
+            //             }),
+            //             type: t.String({
+            //                 maxLength: 50,
+            //                 pattern: /event|identify/i.source
+            //             })
+            //         })
+            //     )
+            // })
+        });
 }
 
 main()

@@ -25,11 +25,20 @@ export function getIpAddress(req: any) {
     else if (req.headers['cf-connecting-ip']) {
         return req.headers['cf-connecting-ip'];
     }
+    // Vercel
+    else if (req.headers['x-real-ip']) {
+        return req.headers['x-real-ip'];
+    }
+    // Heroku
+    else if (req.headers['x-forwarded-for']) {
+        return req.headers['x-forwarded-for'].split(',')[0];
+    }
 
     return getClientIp(req);
+    // return req.headers['x-forwarded-for'] || "127.0.0.1";
 }
 
-export function getDevice(screen: string, os: string | null) {
+export function getDevice(screen: string, os: string) {
     if (!screen) return;
 
     const [width] = screen.split('x');
@@ -104,7 +113,8 @@ export async function getLocation(ip: string, req: any) {
         lookup = await maxmind.open(path.resolve(dir, 'GeoLite2-City.mmdb'));
     }
 
-    const result = lookup.get(ip);
+    // TODO: FIx this null ip issue
+    const result = lookup.get(ip || "");
 
     if (result) {
         const country = result.country?.iso_code ?? result?.registered_country?.iso_code;
@@ -123,7 +133,7 @@ export async function getLocation(ip: string, req: any) {
 
 export async function getClientInfo(req: any, { screen }: any) {
     const userAgent = req.headers['user-agent'];
-    const ip = req.body.payload.ip || getIpAddress(req);
+    const ip = req.body?.ip || getIpAddress(req);
     const location = await getLocation(ip, req);
     const country = location?.country;
     const subdivision1 = location?.subdivision1;
@@ -131,7 +141,7 @@ export async function getClientInfo(req: any, { screen }: any) {
     const city = location?.city;
     const browser = browserName(userAgent);
     const os = detectOS(userAgent);
-    const device = getDevice(screen, os);
+    const device = getDevice(screen, os || "");
 
     return { userAgent, browser, os, ip, country, subdivision1, subdivision2, city, device };
 }
