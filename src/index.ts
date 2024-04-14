@@ -1,4 +1,4 @@
-import Elysia from "elysia";
+import Elysia, { t } from "elysia";
 import {isbot} from "isbot";
 import {useSession} from "./utils/session.ts";
 import {uuid, visitSalt} from "./utils/common.ts";
@@ -7,6 +7,7 @@ import {Env} from "./utils/env.ts";
 import {createBatchEvents} from "./services/Umami.service.ts";
 import debug from "debug";
 import {setupApplication} from "./setup.ts";
+import {HOSTNAME_REGEX, IP_REGEX} from "./libs/constants.ts";
 
 let log = debug("ujs:events")
 
@@ -50,42 +51,42 @@ async function main(){
 
         }, {
             // TODO: FIX this VALIDATION issue
-            // body: t.Object({
-            //     events: t.Array(
-            //         t.Object({
-            //             payload: t.Object({
-            //                 data: t.MaybeEmpty(t.Any()),
-            //                 hostname: t.String({
-            //                     pattern: HOSTNAME_REGEX.source
-            //                 }),
-            //                 ip: t.String({
-            //                     pattern: IP_REGEX.source
-            //                 }),
-            //                 language: t.String({
-            //                     maxLength: 35
-            //                 }),
-            //                 referrer: t.String(),
-            //                 screen: t.String({
-            //                     maxLength: 11
-            //                 }),
-            //                 title: t.String(),
-            //                 url: t.String(),
-            //                 website: t.String(),
-            //                 name: t.String({
-            //                     maxLength: 50
-            //                 }),
-            //                 tag: t.MaybeEmpty(t.String({
-            //                     maxLength: 50
-            //                 })),
-            //                 t: t.MaybeEmpty(t.String())
-            //             }),
-            //             type: t.String({
-            //                 maxLength: 50,
-            //                 pattern: /event|identify/i.source
-            //             })
-            //         })
-            //     )
-            // })
+            body: t.Object({
+                events: t.Array(
+                    t.Object({
+                        payload: t.Object({
+                            data: t.MaybeEmpty(t.Any()),
+                            referrer: t.String(),
+                            title: t.String(),
+                            url: t.String(),
+                            name: t.String({
+                                maxLength: 50
+                            }),
+                            tag: t.MaybeEmpty(t.String({
+                                maxLength: 50
+                            })),
+                            t: t.MaybeEmpty(t.String())
+                        }),
+                        type: t.String({
+                            maxLength: 50,
+                            pattern: /event|identify/i.source
+                        })
+                    })
+                ),
+                hostname: t.String({
+                    pattern: HOSTNAME_REGEX.source
+                }),
+                ip: t.String({
+                    pattern: IP_REGEX.source
+                }),
+                language: t.String({
+                    maxLength: 35
+                }),
+                id: t.String(), //website id
+                screen: t.String({
+                    maxLength: 11
+                }),
+            })
         });
 }
 
