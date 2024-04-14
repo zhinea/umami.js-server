@@ -7,7 +7,6 @@ import {Env} from "./utils/env.ts";
 import {createBatchEvents} from "./services/Umami.service.ts";
 import debug from "debug";
 import {setupApplication} from "./setup.ts";
-import {HOSTNAME_REGEX, IP_REGEX} from "./libs/constants.ts";
 
 let log = debug("ujs:events")
 
@@ -15,11 +14,17 @@ async function main(){
     return new Elysia()
         .use(setupApplication())
         .get('/', () => "Hello World!")
-        .post('/api/send', async (req) => {
+        .post(Env.request.path, async (req) => {
             let {set, headers, body} = req;
 
             if (!process.env.DISABLE_BOT_CHECK && isbot(headers['user-agent'])) {
                 return "nope";
+            }
+
+            if ((<any>body)?.events?.length > Env.request.max_events) {
+                set.headers['X-UJS_Err'] = "Max events exceeded";
+                set.status = 400;
+                return "events limit exceeded";
             }
 
             // TODO: Implement hasBlockedIp function

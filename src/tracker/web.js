@@ -24,8 +24,8 @@
     const domain = attr(_data + 'domains') || '';
     const domains = domain.split(',').map(n => n.trim());
     const host =
-        hostUrl || currentScript.src.split('/').slice(0, -3).join('/');
-    const endpoint = `${host.replace(/\/$/, '')}/api/send`;
+        hostUrl || '__COLLECT_API_HOST__' || currentScript.src.split('/').slice(0, -3).join('/');
+    const endpoint = `${host.replace(/\/$/, '')}__COLLECT_API_ENDPOINT__`;
     const screen = `${width}x${height}`;
     const eventRegex = /data-umami-event-([\w-_]+)/;
     const eventNameAttribute = _data + 'umami-event';
@@ -200,7 +200,7 @@
 
         if(firstTime){
             firstTime = false;
-            sendCollections()
+            sendCollections().then(r => {})
         }
     };
 

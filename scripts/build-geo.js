@@ -34,6 +34,11 @@ if (!fs.existsSync(dest)) {
   fs.mkdirSync(dest);
 }
 
+if (fs.existsSync(path.join(__dirname, '../geo', `${db}.mmdb`))) {
+    console.log('Geo database already exists.');
+    process.exit(0);
+}
+
 const download = url =>
   new Promise(resolve => {
     https.get(url, res => {
