@@ -24,12 +24,15 @@
     const domain = attr(_data + 'domains') || '';
     const domains = domain.split(',').map(n => n.trim());
     const host =
-        hostUrl || '__COLLECT_API_HOST__' || currentScript.src.split('/').slice(0, -1).join('/');
-    const endpoint = `${host.replace(/\/$/, '')}__COLLECT_API_ENDPOINT__`;
+        hostUrl || currentScript.src.split('/').slice(0, -3).join('/');
+    const endpoint = `${host.replace(/\/$/, '')}/api/send`;
     const screen = `${width}x${height}`;
     const eventRegex = /data-umami-event-([\w-_]+)/;
     const eventNameAttribute = _data + 'umami-event';
     const delayDuration = 300;
+
+    let collections = [];
+    let firstTime = true;
 
     /* Helper functions */
 
@@ -56,14 +59,11 @@
     };
 
     const getPayload = () => ({
-        website,
-        hostname,
-        screen,
-        language,
         title: encode(title),
         url: encode(currentUrl),
         referrer: encode(currentRef),
         tag: tag ? tag : undefined,
+        t: new Date().getTime(),
     });
 
     /* Event handlers */
@@ -190,9 +190,24 @@
         (localStorage && localStorage.getItem('umami.disabled')) ||
         (domain && !domains.includes(hostname));
 
-    const send = async (payload, type = 'event') => {
+    const collect = (payload, type = 'event') => {
         if (trackingDisabled()) return;
-        const headers = {
+
+        collections.push({
+            payload,
+            type
+        })
+
+        if(firstTime){
+            firstTime = false;
+            sendCollections()
+        }
+    };
+
+    const sendCollections = async () => {
+        if(collections.length === 0) return;
+
+        let headers = {
             'Content-Type': 'application/json',
         };
         if (typeof cache !== 'undefined') {
@@ -201,33 +216,43 @@
         try {
             const res = await fetch(endpoint, {
                 method: 'POST',
-                body: JSON.stringify({ type, payload }),
+                body: JSON.stringify({
+                    events: collections,
+                    hostname,
+                    screen,
+                    id: website,
+                    language
+                }),
                 headers,
             });
             const text = await res.text();
+
+            collections = [];
 
             return (cache = text);
         } catch {
             /* empty */
         }
-    };
+    }
+
+    setInterval(() => sendCollections(), 5 * 1000);
 
     const track = (obj, data) => {
         if (typeof obj === 'string') {
-            return send({
+            return collect({
                 ...getPayload(),
                 name: obj,
                 data: typeof data === 'object' ? data : undefined,
             });
         } else if (typeof obj === 'object') {
-            return send(obj);
+            return collect(obj);
         } else if (typeof obj === 'function') {
-            return send(obj(getPayload()));
+            return collect(obj(getPayload()));
         }
-        return send(getPayload());
+        return collect(getPayload());
     };
 
-    const identify = data => send({ ...getPayload(), data }, 'identify');
+    const identify = data => collect({ ...getPayload(), data }, 'identify');
 
     /* Start */
 

@@ -3,6 +3,7 @@ import {uuid} from "../utils/common.ts";
 import {prisma} from "../libs/prisma.ts";
 import {EVENT_NAME_LENGTH, EVENT_TYPE, PAGE_TITLE_LENGTH, URL_LENGTH} from "../libs/constants.ts";
 import {saveEventData} from "./eventData.ts";
+import type {GetResult} from "@prisma/client/runtime/library";
 
 export async function saveEvent(args: GetResult<{
     id: string;
@@ -28,7 +29,8 @@ export async function saveEvent(args: GetResult<{
     sessionId: string;
     urlPath: any;
     urlQuery: any;
-    referrerPath: any
+    referrerPath: any,
+    t: any
 }) {
     return runQuery({
         [PRISMA]: () => relationalQuery(args),
@@ -49,6 +51,7 @@ async function relationalQuery(data: {
     pageTitle?: string;
     eventName?: string;
     eventData?: any;
+    t?: any;
 }) {
     const {
         websiteId,
@@ -62,6 +65,7 @@ async function relationalQuery(data: {
         eventName,
         eventData,
         pageTitle,
+        t,
     } = data;
     const websiteEventId = uuid();
 
@@ -79,6 +83,7 @@ async function relationalQuery(data: {
             pageTitle: pageTitle?.substring(0, PAGE_TITLE_LENGTH),
             eventType: eventName ? EVENT_TYPE.customEvent : EVENT_TYPE.pageView,
             eventName: eventName ? eventName?.substring(0, EVENT_NAME_LENGTH) : null,
+            createdAt: data?.t ? new Date(t) : new Date(),
         },
     });
 
@@ -90,6 +95,7 @@ async function relationalQuery(data: {
             urlPath: urlPath?.substring(0, URL_LENGTH),
             eventName: eventName?.substring(0, EVENT_NAME_LENGTH),
             eventData,
+            t,
         });
     }
 

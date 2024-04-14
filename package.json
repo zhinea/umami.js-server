@@ -7,6 +7,7 @@
     "build": "bun build src/index.ts",
     "start": "NODE_ENV=production bun src/index.ts",
     "build-geo": "bun run scripts/build-geo.js",
+    "build:web": "bun build src/tracker/web.js --outdir ./public/build --minify --splitting",
     "test": "bun test"
   },
   "devDependencies": {
@@ -23,6 +24,7 @@
   },
   "dependencies": {
     "@elysiajs/cors": "^1.0.2",
+    "@elysiajs/static": "^1.0.2",
     "@prisma/client": "5.0.0",
     "@umami/redis-client": "^0.18.0",
     "date-fns": "^3.6.0",

@@ -11,7 +11,7 @@ interface ISession extends Session {
 export async function createBatchEvents(events: any, session: ISession){
     for (const ev of events) {
 
-        let { url, referrer } = ev.payload
+        let { url, referrer, t } = ev.payload
         const pageTitle = safeDecodeURI(ev.title);
 
         if (ev.type === COLLECTION_TYPE.event) {
@@ -47,6 +47,7 @@ export async function createBatchEvents(events: any, session: ISession){
                 ...session,
                 sessionId: session.id,
                 visitId: session.visitId,
+                t
             });
         }
 

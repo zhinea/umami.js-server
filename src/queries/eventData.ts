@@ -13,6 +13,7 @@ export async function saveEventData(args: {
     eventName?: string;
     eventData: DynamicData;
     createdAt?: string;
+    t?: any;
 }) {
     return runQuery({
         [PRISMA]: () => relationalQuery(args),
@@ -24,6 +25,7 @@ async function relationalQuery(data: {
     websiteId: string;
     eventId: string;
     eventData: DynamicData;
+    t?: any;
 }) {
     const { websiteId, eventId, eventData } = data;
 
@@ -39,6 +41,7 @@ async function relationalQuery(data: {
         numberValue: a.dataType === DATA_TYPE.number ? a.value : null,
         dateValue: a.dataType === DATA_TYPE.date ? new Date(a.value) : null,
         dataType: a.dataType,
+        createdAt: data?.t ? new Date(data?.t) : new Date()
     }));
 
     return prisma.eventData.createMany({

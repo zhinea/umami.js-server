@@ -30,6 +30,7 @@ async function main(){
 
             if(isError){
                 set.headers['X-UJS_Err'] = "session";
+                set.status = 500;
                 return session;
             }
 
@@ -51,42 +52,44 @@ async function main(){
 
         }, {
             // TODO: FIX this VALIDATION issue
-            body: t.Object({
-                events: t.Array(
-                    t.Object({
-                        payload: t.Object({
-                            data: t.MaybeEmpty(t.Any()),
-                            referrer: t.String(),
-                            title: t.String(),
-                            url: t.String(),
-                            name: t.String({
-                                maxLength: 50
-                            }),
-                            tag: t.MaybeEmpty(t.String({
-                                maxLength: 50
-                            })),
-                            t: t.MaybeEmpty(t.String())
-                        }),
-                        type: t.String({
-                            maxLength: 50,
-                            pattern: /event|identify/i.source
-                        })
-                    })
-                ),
-                hostname: t.String({
-                    pattern: HOSTNAME_REGEX.source
-                }),
-                ip: t.String({
-                    pattern: IP_REGEX.source
-                }),
-                language: t.String({
-                    maxLength: 35
-                }),
-                id: t.String(), //website id
-                screen: t.String({
-                    maxLength: 11
-                }),
-            })
+            // body: t.Object({
+            //     events: t.Array(
+            //         t.Object({
+            //             payload: t.Object({
+            //                 data: t.MaybeEmpty(t.Any()),
+            //                 referrer: t.String(),
+            //                 title: t.String(),
+            //                 url: t.String(),
+            //                 name: t.String({
+            //                     maxLength: 50
+            //                 }),
+            //                 tag: t.MaybeEmpty(t.String({
+            //                     maxLength: 50
+            //                 })),
+            //                 t: t.MaybeEmpty(t.String())
+            //             }),
+            //             type: t.String({
+            //                 maxLength: 50,
+            //                 pattern: /event|identify/i.source
+            //             })
+            //         })
+            //     ),
+            //     hostname: t.String({
+            //         pattern: HOSTNAME_REGEX.source
+            //     }),
+            //     // ip: t.MaybeEmpty(t.String({
+            //     //     pattern: IP_REGEX.source
+            //     // })),
+            //     language: t.MaybeEmpty(
+            //         t.String({
+            //             maxLength: 35
+            //         })
+            //     ),
+            //     id: t.String(), //website id
+            //     screen: t.String({
+            //         maxLength: 11
+            //     }),
+            // })
         });
 }
 
