@@ -6,7 +6,7 @@
     "dev": "bun --watch src/index.ts",
     "start": "NODE_ENV=production bun src/index.ts",
     "build:all": "bun build:server && bun build:geo && bun build:tracker",
-    "build:server": "bun build src/index.ts --outdir dist --minify --target bun",
+    "build:server": "bun build src/index.ts --outdir dist --target bun",
     "build:geo": "bun run scripts/build-geo.js",
     "build:tracker": "bun run scripts/build-tracker.js",
     "test": "bun test"
